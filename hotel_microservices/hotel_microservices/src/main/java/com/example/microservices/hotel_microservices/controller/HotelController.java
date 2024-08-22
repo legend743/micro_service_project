@@ -1,5 +1,6 @@
 package com.example.microservices.hotel_microservices.controller;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +23,10 @@ public class HotelController {
     public ResponseEntity<HotelEntity> addHotels(@RequestBody HotelEntity hotelEntity){
         return ResponseEntity.status(HttpStatus.CREATED).body(microserve.Create(hotelEntity));
     }
-
+    @GetMapping("/getallhotels")
+    public List<HotelEntity>getAllHotel(){
+    	return microserve.getAll();
+    }
     @GetMapping("/gethotels/{id}")
     public Optional<HotelEntity> getHotels(@PathVariable int id){
         return microserve.get(id);

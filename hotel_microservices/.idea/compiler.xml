@@ -7,13 +7,13 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="hotelrating" />
         <module name="hotel_microservices" />
-        <module name="UserServices" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="hotelrating" target="17" />
       <module name="ratingservices" target="17" />
+      <module name="UserServices" target="17" />
     </bytecodeTargetLevel>
   </component>
   <component name="JavacSettings">

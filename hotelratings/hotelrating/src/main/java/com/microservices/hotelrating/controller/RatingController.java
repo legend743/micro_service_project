@@ -1,6 +1,7 @@
 package com.microservices.hotelrating.controller;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,11 +20,11 @@ import com.microservices.hotelrating.service.RatingService;
 @RestController
 @RequestMapping("/hotelrating")
 
-//localhost:8081/hotelrating
+//localhost:8082/hotelrating
 public class RatingController {
 	private static final Logger logger= org.slf4j.LoggerFactory.getLogger(RatingController.class);
 	@Autowired
-private RatingService ratingservice;
+	private RatingService ratingservice;
 	
 	@PostMapping
 	public ResponseEntity<RatingUtility>createHotelRating(@RequestBody RatingUtility ratingutility){
@@ -36,12 +37,12 @@ private RatingService ratingservice;
 		return ResponseEntity.ok(ratingservice.getAllRating());
 	}
 	@GetMapping("/getbyusers/{userId}")
-	public ResponseEntity<Object> getRatingByUserid(@PathVariable Long userId){
+	public ResponseEntity<Object> getRatingByUserid(@PathVariable String userId){
 		logger.info("user detais userId:{}"+userId);
 		return ResponseEntity.ok(ratingservice.getRatingByUserId(userId));
 	}
-//	@GetMapping("/getByHotelId{hotelId}")
-//	public ResponseEntity<List<RatingUtility>> getRatingByHotelId(@PathVariable String hotelId){
-//		return ResponseEntity.ok(ratingservice.getAllRatingByHotel(hotelId));
-//	}
+	@GetMapping("/getByRatingId/{ratingId}")
+	public ResponseEntity<Optional<RatingUtility>> getRatingByHotelId(@PathVariable Long ratingId){
+		return ResponseEntity.ok(ratingservice.getRatingByRatingId(ratingId));
+	}
 }

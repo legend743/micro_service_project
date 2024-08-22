@@ -36,14 +36,27 @@ public class RatingServiceImpl implements RatingService {
 		return null;
 	}
 
+//	@Override
+//	public Object getRatingByUserId(Long userId) {
+//		
+//		return ratingrepo.findById(userId);
+//	}
+
+//	  @Override
+//	    public List<RatingUtility> getRatingByUserId(Long userId) {
+//	        return ratingrepo.findByUserID(userId);
+//	    }
+
 	@Override
-	public Object getRatingByUserId(Long userId) {
-		
-		return ratingrepo.findById(userId);
+	public Optional<RatingUtility> getRatingByRatingId(Long ratingId){
+		return ratingrepo.findById(ratingId);
 	}
 
+	@Override
+	public Object getRatingByUserId(String userId) {
 
-
+	return ratingrepo.findUserByUserId(userId);
+	}
 
 
 }
