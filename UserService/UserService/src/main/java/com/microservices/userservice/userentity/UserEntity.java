@@ -23,14 +23,9 @@ public class UserEntity {
 	private List<Rating>ratings=new ArrayList<>();
 	
 	@Transient
-	private Hotel hotel;
+	private List<Hotel> hotel=new ArrayList<>();
 	
-	public Hotel getHotel() {
-		return hotel;
-	}
-	public void setHotel(Hotel hotel) {
-		this.hotel = hotel;
-	}
+	
 	public String getUserId() {
 		return userId;
 	}
@@ -56,13 +51,20 @@ public class UserEntity {
 		this.about = about;
 	}
 
-	public UserEntity(String userId, String name, String email, String about, List<Rating> ratings, Hotel hotel) {
+
+	public UserEntity(String userId, String name, String email, String about, List<Rating> ratings, List<Hotel> hotel) {
 		super();
 		this.userId = userId;
 		this.name = name;
 		this.email = email;
 		this.about = about;
 		this.ratings = ratings;
+		this.hotel = hotel;
+	}
+	public List<Hotel> getHotel() {
+		return hotel;
+	}
+	public void setHotel(List<Hotel> hotel) {
 		this.hotel = hotel;
 	}
 	public UserEntity() {

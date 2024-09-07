@@ -1,6 +1,10 @@
 package com.microservices.userservice.serviceimpl;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +18,7 @@ import org.springframework.web.client.RestTemplate;
 import com.microservices.userservice.exception.ResourceNotFoundException;
 import com.microservices.userservice.repository.UserRepository;
 import com.microservices.userservice.service.UserService;
+import com.microservices.userservice.userentity.Hotel;
 import com.microservices.userservice.userentity.Rating;
 import com.microservices.userservice.userentity.UserEntity;
 
@@ -45,54 +50,60 @@ public class ServiceImpl implements UserService {
 	}
 
 
-	  @Override
-	    public UserEntity getUser(String userId) {
-	        UserEntity userDetails = userrepo.findById(userId)
-	                .orElseThrow(() -> new ResourceNotFoundException("User is not found with given ID: " + userId));
-	        
-	        // Connect to rating service
-	        String url = "http://localhost:8082/hotelrating/getbyusers/user123";
-	        String hotelUrl="localhost:8081/hoteldetails/gethotels/1";
+	@Override
+	public UserEntity getUser(String userId) {
+	    // Fetch user details from the repository
+	    UserEntity userDetails = userrepo.findById(userId)
+	            .orElseThrow(() -> new ResourceNotFoundException("User is not found with given ID: " + userId));
 
-	        try {
-	            // Logging the URL
-	            logger.info("Making REST call to: {}", url);
+	    // Connect to rating service
+	    String url = "http://localhost:8082/hotelrating/getbyusers/"+userId;
+	  
 
-//	        Rating response=  resttemplate.getForObject(url, Rating.class);
-	            ResponseEntity<List<Rating>> responseEntity = resttemplate.exchange(
-	                    url,
+	    try {
+	        // Logging the URL
+	        logger.info("Making REST call to: {}", url);
+
+	        // Fetch list of ratings from the rating service
+	        ResponseEntity<List<Rating>> responseEntity = resttemplate.exchange(
+	                url,
+	                HttpMethod.GET,
+	                null,
+	                new ParameterizedTypeReference<List<Rating>>() {}
+	        );
+
+	        List<Rating> ratingList = responseEntity.getBody();
+
+	        // For each rating, fetch corresponding hotel details and set it to the rating
+	        List<Rating> updatedRatingList = ratingList.stream().map(rating -> {
+	        	  String hotelUrl = "http://localhost:8081/hoteldetails/gethotels/"+rating.getHotelId();
+	            // API call to hotel service
+	            ResponseEntity<Hotel> hotelResponseEntity = resttemplate.exchange(
+	                    hotelUrl,
 	                    HttpMethod.GET,
 	                    null,
-	                    new ParameterizedTypeReference<List<Rating>>() {}
-	                    
-	                    
-	                );
-//	          List<Rating> ratingList= responseEntity.stream().map(rating->{
-//	            	//api call hotel service
-//	            	//set the hotel service to rating
-//	            	//return the rating
-//	        	  
-//	            }).collec(Collectors.toList());
-	            
-	            
-	            // Logging the response
-	            List<Rating> ratings = responseEntity.getBody();
-	        userDetails.setRatings(ratings);
-	        
-	            logger.info("Response from rating service: {}", ratings);
+	                    new ParameterizedTypeReference<Hotel>() {}  // Corrected type reference
+	            );
 
-	           
+	            Hotel hotel = hotelResponseEntity.getBody();
+	            // Set the hotel service response to the rating
+	            rating.setHotel(hotel);
 
-	        } catch (RestClientException e) {
-	            logger.error("Error occurred while making REST call: {}", e.getMessage(), e);
-	            throw new RuntimeException("Failed to fetch ratings for user ID: " + userId);
-	        }
+	            // Return the updated rating
+	            return rating;
+	        }).collect(Collectors.toList());
 
-	        return userDetails;
+	        // Set the updated ratings list to the user
+	        userDetails.setRatings(updatedRatingList);
+
+	        // Logging the response
+	        logger.info("Response from rating service: {}", updatedRatingList);
+
+	    } catch (RestClientException e) {
+	        logger.error("Error occurred while making REST call: {}", e.getMessage(), e);
+	        throw new RuntimeException("Failed to fetch ratings for user ID: " + userId);
 	    }
-	
-	
-	
 
-
-}
+	    return userDetails;
+	}}
+	
