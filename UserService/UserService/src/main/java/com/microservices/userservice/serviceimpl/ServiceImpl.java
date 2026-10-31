@@ -1,4 +1,5 @@
 package com.microservices.userservice.serviceimpl;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -15,6 +16,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import com.microservices.userservice.dto.UserRequestDto;
+import com.microservices.userservice.dto.UserResponseDto;
 import com.microservices.userservice.exception.ResourceNotFoundException;
 import com.microservices.userservice.repository.UserRepository;
 import com.microservices.userservice.service.UserService;
@@ -37,12 +40,27 @@ public class ServiceImpl implements UserService {
 	private  final Logger logger=LoggerFactory.getLogger(ServiceImpl.class);
 
 	@Override
-	public UserEntity createuser(UserEntity user) {
-		String randomUserId=UUID.randomUUID().toString();
-		user.setUserId(randomUserId);
-		return userrepo.save(user);
+	public UserResponseDto createuser(UserRequestDto user) {
+		if(userrepo.existsById(user.getEmail()))
+			throw new ResourceNotFoundException("user email already exists");
+		UserEntity u=new UserEntity();
+		u.setUserId(UUID.randomUUID().toString() );
+		u.setName(user.getName());
+		u.setAbout(user.getAbout());
+		u.setEmail(user.getEmail());
+		u.setCreatedAt(LocalDateTime.now());
+		UserEntity saved= userrepo.save(u);
+		return toResponse(saved);
 	}
+private UserResponseDto toResponse(UserEntity savedUserEntity){
+	UserResponseDto ud=new  UserResponseDto();
+	ud.setUserId(savedUserEntity.getUserId());
+	ud.setAbout(savedUserEntity.getAbout());
+	ud.setEmail(savedUserEntity.getEmail());
+	ud.setName(savedUserEntity.getName());
+	return  ud;
 
+}
 	@Override
 	public List<UserEntity> getAllUsers() {
 		// TODO Auto-generated method stub

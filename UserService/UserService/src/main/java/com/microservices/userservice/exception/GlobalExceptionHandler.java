@@ -1,24 +1,46 @@
 package com.microservices.userservice.exception;
 
+import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.microservices.userservice.payload.ApiResponse;
-
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-    
+
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ApiResponse> handleResourceNotFoundException(ResourceNotFoundException exc) {
-        String message = exc.getMessage();
-        ApiResponse response = new ApiResponse.Builder()
-            .message(message)
-            .success(false)
-            .status(HttpStatus.NOT_FOUND)
-            .build();
-        
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+    public ResponseEntity<Map<String, Object>> notFound(ResourceNotFoundException ex, HttpServletRequest req) {
+        return build(HttpStatus.NOT_FOUND, ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<Map<String, Object>> duplicate(DuplicateResourceException ex, HttpServletRequest req) {
+        return build(HttpStatus.CONFLICT, ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, Object>> invalid(MethodArgumentNotValidException ex, HttpServletRequest req) {
+        String msg = ex.getBindingResult().getFieldErrors().stream()
+                .map(e -> e.getField() + ": " + e.getDefaultMessage())
+                .collect(Collectors.joining(", "));
+        return build(HttpStatus.BAD_REQUEST, msg, req);
+    }
+
+    // helper method: must be INSIDE the class
+    private ResponseEntity<Map<String, Object>> build(HttpStatus status, String message, HttpServletRequest req) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("timestamp", LocalDateTime.now());
+        body.put("status", status.value());
+        body.put("message", message);
+        body.put("path", req.getRequestURI());
+        return ResponseEntity.status(status).body(body);
     }
 }
