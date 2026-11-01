@@ -7,6 +7,6 @@ import com.microservices.userservice.userentity.UserEntity;
 
 @Repository
 public interface UserRepository extends JpaRepository<UserEntity, String> {
-    boolean existsByEmail();
+    boolean existsByEmail(String emailId);
 
 }

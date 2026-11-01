@@ -1,11 +1,14 @@
 package com.microservices.userservice.serviceimpl;
+
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.springframework.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +19,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import com.microservices.userservice.client.RatingClientInterface;
+import com.microservices.userservice.dto.UserProfileResponseDto;
+import com.microservices.userservice.dto.UserRatingDto;
 import com.microservices.userservice.dto.UserRequestDto;
 import com.microservices.userservice.dto.UserResponseDto;
 import com.microservices.userservice.exception.ResourceNotFoundException;
@@ -25,103 +31,143 @@ import com.microservices.userservice.userentity.Hotel;
 import com.microservices.userservice.userentity.Rating;
 import com.microservices.userservice.userentity.UserEntity;
 
-
 @Service
 
 public class ServiceImpl implements UserService {
-	
+
 	@Autowired
-	
+
 	UserRepository userrepo;
-//	
+	//
 	@Autowired
 	private RestTemplate resttemplate;
-	
-	private  final Logger logger=LoggerFactory.getLogger(ServiceImpl.class);
+	@Autowired
+	private RatingClientInterface ratingClientInterface;
+
+	private final Logger logger = LoggerFactory.getLogger(ServiceImpl.class);
 
 	@Override
 	public UserResponseDto createuser(UserRequestDto user) {
-		if(userrepo.existsById(user.getEmail()))
+		if (userrepo.existsById(user.getEmail()))
 			throw new ResourceNotFoundException("user email already exists");
-		UserEntity u=new UserEntity();
-		u.setUserId(UUID.randomUUID().toString() );
+		UserEntity u = new UserEntity();
+		u.setUserId(UUID.randomUUID().toString());
 		u.setName(user.getName());
 		u.setAbout(user.getAbout());
 		u.setEmail(user.getEmail());
 		u.setCreatedAt(LocalDateTime.now());
-		UserEntity saved= userrepo.save(u);
+		UserEntity saved = userrepo.save(u);
 		return toResponse(saved);
 	}
-private UserResponseDto toResponse(UserEntity savedUserEntity){
-	UserResponseDto ud=new  UserResponseDto();
-	ud.setUserId(savedUserEntity.getUserId());
-	ud.setAbout(savedUserEntity.getAbout());
-	ud.setEmail(savedUserEntity.getEmail());
-	ud.setName(savedUserEntity.getName());
-	return  ud;
 
-}
+	@Override
+	public ResponseEntity<UserProfileResponseDto> getProfile(String Id) {
+		if (!userrepo.existsById(Id)) {
+			throw new ResourceNotFoundException("user with given Id is not found!");
+		}
+		Optional<UserEntity> user = userrepo.findById(Id);
+
+		UserResponseDto urd = toResponse(user.get());
+		UserProfileResponseDto retuResponseDto = new UserProfileResponseDto(urd, returnListOfUserRatedHotel(Id), "fetched");
+		
+
+		return new ResponseEntity<UserProfileResponseDto>(retuResponseDto, HttpStatus.OK);
+
+	}
+
 	@Override
 	public List<UserEntity> getAllUsers() {
 		// TODO Auto-generated method stub
 		return userrepo.findAll();
 	}
 
-
 	@Override
 	public UserEntity getUser(String userId) {
-	    // Fetch user details from the repository
-	    UserEntity userDetails = userrepo.findById(userId)
-	            .orElseThrow(() -> new ResourceNotFoundException("User is not found with given ID: " + userId));
+		// Fetch user details from the repository
+		UserEntity userDetails = userrepo.findById(userId)
+				.orElseThrow(() -> new ResourceNotFoundException("User is not found with given ID: " + userId));
 
-	    // Connect to rating service
-	    String url = "http://localhost:8082/hotelrating/getbyusers/"+userId;
-	  
+		// Connect to rating service
+		String url = "http://localhost:8082/hotelrating/getbyusers/" + userId;
 
-	    try {
-	        // Logging the URL
-	        logger.info("Making REST call to: {}", url);
+		try {
+			// Logging the URL
+			logger.info("Making REST call to: {}", url);
 
-	        // Fetch list of ratings from the rating service
-	        ResponseEntity<List<Rating>> responseEntity = resttemplate.exchange(
-	                url,
-	                HttpMethod.GET,
-	                null,
-	                new ParameterizedTypeReference<List<Rating>>() {}
-	        );
+			// Fetch list of ratings from the rating service
+			ResponseEntity<List<Rating>> responseEntity = resttemplate.exchange(
+					url,
+					HttpMethod.GET,
+					null,
+					new ParameterizedTypeReference<List<Rating>>() {
+					});
 
-	        List<Rating> ratingList = responseEntity.getBody();
+			List<Rating> ratingList = responseEntity.getBody();
 
-	        // For each rating, fetch corresponding hotel details and set it to the rating
-	        List<Rating> updatedRatingList = ratingList.stream().map(rating -> {
-	        	  String hotelUrl = "http://localhost:8081/hoteldetails/gethotels/"+rating.getHotelId();
-	            // API call to hotel service
-	            ResponseEntity<Hotel> hotelResponseEntity = resttemplate.exchange(
-	                    hotelUrl,
-	                    HttpMethod.GET,
-	                    null,
-	                    new ParameterizedTypeReference<Hotel>() {}  // Corrected type reference
-	            );
+			// For each rating, fetch corresponding hotel details and set it to the rating
+			List<Rating> updatedRatingList = ratingList.stream().map(rating -> {
+				String hotelUrl = "http://localhost:8081/hoteldetails/gethotels/" + rating.getHotelId();
+				// API call to hotel service
+				ResponseEntity<Hotel> hotelResponseEntity = resttemplate.exchange(
+						hotelUrl,
+						HttpMethod.GET,
+						null,
+						new ParameterizedTypeReference<Hotel>() {
+						} // Corrected type reference
+				);
 
-	            Hotel hotel = hotelResponseEntity.getBody();
-	            // Set the hotel service response to the rating
-	            rating.setHotel(hotel);
+				Hotel hotel = hotelResponseEntity.getBody();
+				// Set the hotel service response to the rating
+				rating.setHotel(hotel);
 
-	            // Return the updated rating
-	            return rating;
-	        }).collect(Collectors.toList());
+				// Return the updated rating
+				return rating;
+			}).collect(Collectors.toList());
 
-	        // Set the updated ratings list to the user
-	        userDetails.setRatings(updatedRatingList);
+			// Set the updated ratings list to the user
+			userDetails.setRatings(updatedRatingList);
 
-	        // Logging the response
-	        logger.info("Response from rating service: {}", updatedRatingList);
+			// Logging the response
+			logger.info("Response from rating service: {}", updatedRatingList);
 
-	    } catch (RestClientException e) {
-	        logger.error("Error occurred while making REST call: {}", e.getMessage(), e);
-	        throw new RuntimeException("Failed to fetch ratings for user ID: " + userId);
-	    }
+		} catch (RestClientException e) {
+			logger.error("Error occurred while making REST call: {}", e.getMessage(), e);
+			throw new RuntimeException("Failed to fetch ratings for user ID: " + userId);
+		}
 
-	    return userDetails;
-	}}
-	
+		return userDetails;
+	}
+
+	private UserResponseDto toResponse(UserEntity savedUserEntity) {
+		UserResponseDto ud = new UserResponseDto();
+		ud.setUserId(savedUserEntity.getUserId());
+		ud.setAbout(savedUserEntity.getAbout());
+		ud.setEmail(savedUserEntity.getEmail());
+		ud.setName(savedUserEntity.getName());
+		return ud;
+
+	}
+
+	private List<UserRatingDto> returnListOfUserRatedHotel(String userId) {
+
+		// will pass rating from rating service
+		List<Rating> rating = ratingClientInterface.getRatingByUserId(userId);
+
+		List<UserRatingDto>ratingDtos=rating.stream().map(this::toRatingDto).collect(Collectors.toList());
+		return ratingDtos;
+		
+	}
+
+	private UserRatingDto toRatingDto(Rating rating){
+		UserRatingDto dto=new UserRatingDto();
+		
+		dto.setUserId(rating.getUserId());
+		dto.setHotelId(rating.getHotelId());
+		dto.setRatingId(rating.getRatingId());
+		dto.setRating(rating.getRating());
+		dto.setFeedback(rating.getFeedback());
+		dto.setHotel(rating.getHotel());
+		return dto;
+
+	}
+}

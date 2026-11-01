@@ -47,7 +47,7 @@ logging:
         com.netflix.eureka: DEBUG
     org.springframework.cloud.netflix.eureka: DEBUG
     org.springframework.web: DEBUG
-
+# hotel.rating.url=
 eureka:
   instance:
     prefer-ip-address: true
