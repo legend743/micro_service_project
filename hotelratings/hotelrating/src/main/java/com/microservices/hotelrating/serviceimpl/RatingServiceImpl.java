@@ -53,7 +53,7 @@ public class RatingServiceImpl implements RatingService {
 	}
 
 	@Override
-	public Object getRatingByUserId(String userId) {
+	public List<RatingUtility> getRatingByUserId(String userId) {
 
 	return ratingrepo.findUserByUserId(userId);
 	}

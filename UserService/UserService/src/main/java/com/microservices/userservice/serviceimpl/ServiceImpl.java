@@ -19,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import com.microservices.userservice.client.HotelClientInterface;
 import com.microservices.userservice.client.RatingClientInterface;
 import com.microservices.userservice.dto.UserProfileResponseDto;
 import com.microservices.userservice.dto.UserRatingDto;
@@ -43,6 +44,8 @@ public class ServiceImpl implements UserService {
 	private RestTemplate resttemplate;
 	@Autowired
 	private RatingClientInterface ratingClientInterface;
+	@Autowired 
+	private HotelClientInterface hotelClientInterface;
 
 	private final Logger logger = LoggerFactory.getLogger(ServiceImpl.class);
 
@@ -68,17 +71,17 @@ public class ServiceImpl implements UserService {
 		Optional<UserEntity> user = userrepo.findById(Id);
 
 		UserResponseDto urd = toResponse(user.get());
-		UserProfileResponseDto retuResponseDto = new UserProfileResponseDto(urd, returnListOfUserRatedHotel(Id), "fetched");
-		
+		UserProfileResponseDto retuResponseDto = new UserProfileResponseDto(urd, returnListOfUserRatedHotel(Id),
+				"fetched");
 
 		return new ResponseEntity<UserProfileResponseDto>(retuResponseDto, HttpStatus.OK);
 
 	}
 
 	@Override
-	public List<UserEntity> getAllUsers() {
-		// TODO Auto-generated method stub
-		return userrepo.findAll();
+	public List<UserResponseDto> getAllUsers() {
+
+		return userrepo.findAll().stream().map(this::toResponse).collect(Collectors.toList());
 	}
 
 	@Override
@@ -88,39 +91,44 @@ public class ServiceImpl implements UserService {
 				.orElseThrow(() -> new ResourceNotFoundException("User is not found with given ID: " + userId));
 
 		// Connect to rating service
-		String url = "http://localhost:8082/hotelrating/getbyusers/" + userId;
+		// String url = "http://localhost:8082/hotelrating/getbyusers/" + userId;
+
 
 		try {
 			// Logging the URL
-			logger.info("Making REST call to: {}", url);
+			logger.info("Making REST call to: {}");
 
-			// Fetch list of ratings from the rating service
-			ResponseEntity<List<Rating>> responseEntity = resttemplate.exchange(
-					url,
-					HttpMethod.GET,
-					null,
-					new ParameterizedTypeReference<List<Rating>>() {
-					});
+			// // Fetch list of ratings from the rating service
+			// ResponseEntity<List<Rating>> responseEntity = resttemplate.exchange(
+			// 		url,
+			// 		HttpMethod.GET,
+			// 		null,
+			// 		new ParameterizedTypeReference<List<Rating>>() {
+			// 		});
+List<Rating> responseEntity =ratingClientInterface.getRatingByUserId(userId);
+			
 
-			List<Rating> ratingList = responseEntity.getBody();
+			List<Rating> ratingList = responseEntity;
 
 			// For each rating, fetch corresponding hotel details and set it to the rating
 			List<Rating> updatedRatingList = ratingList.stream().map(rating -> {
-				String hotelUrl = "http://localhost:8081/hoteldetails/gethotels/" + rating.getHotelId();
+				// String hotelUrl = "http://localhost:8081/hoteldetails/gethotels/" + rating.getHotelId();
+				Optional<Hotel> hotel=hotelClientInterface.getHotels(rating.getHotelId());
 				// API call to hotel service
-				ResponseEntity<Hotel> hotelResponseEntity = resttemplate.exchange(
-						hotelUrl,
-						HttpMethod.GET,
-						null,
-						new ParameterizedTypeReference<Hotel>() {
-						} // Corrected type reference
-				);
+				// ResponseEntity<Hotel> hotelResponseEntity = resttemplate.exchange(
+				// 		hotelUrl,
+				// 		HttpMethod.GET,
+				// 		null,
+				// 		new ParameterizedTypeReference<Hotel>() {
+				// 		} // Corrected type reference
+				// );
 
-				Hotel hotel = hotelResponseEntity.getBody();
+				// Hotel hotel = hotelResponseEntity.getBody();
 				// Set the hotel service response to the rating
-				rating.setHotel(hotel);
+				// rating.setHotel(hotel);
 
 				// Return the updated rating
+				rating.setHotel(hotel.get());
 				return rating;
 			}).collect(Collectors.toList());
 
@@ -153,14 +161,14 @@ public class ServiceImpl implements UserService {
 		// will pass rating from rating service
 		List<Rating> rating = ratingClientInterface.getRatingByUserId(userId);
 
-		List<UserRatingDto>ratingDtos=rating.stream().map(this::toRatingDto).collect(Collectors.toList());
+		List<UserRatingDto> ratingDtos = rating.stream().map(this::toRatingDto).collect(Collectors.toList());
 		return ratingDtos;
-		
+
 	}
 
-	private UserRatingDto toRatingDto(Rating rating){
-		UserRatingDto dto=new UserRatingDto();
-		
+	private UserRatingDto toRatingDto(Rating rating) {
+		UserRatingDto dto = new UserRatingDto();
+
 		dto.setUserId(rating.getUserId());
 		dto.setHotelId(rating.getHotelId());
 		dto.setRatingId(rating.getRatingId());

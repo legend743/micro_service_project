@@ -14,7 +14,7 @@ import lombok.Setter;
 public class UserRatingDto {
     private Long ratingId;
     private String userId;
-    private String hotelId;
+    private int hotelId;
     private int rating;
     private String feedback;
     private Hotel hotel;

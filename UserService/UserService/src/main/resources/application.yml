@@ -57,3 +57,16 @@ eureka:
     service-url:
       defaultZone: http://localhost:8761/eureka/
 
+
+feign:
+  circuitbreaker:
+    enabled: true
+  client:
+    config:
+      default:
+        connectTimeout: 2000
+        readTimeout: 3000
+
+# feign.circuitbreaker.enabled=true
+# feign.client.config.default.connectTimeout=2000
+# feign.client.config.default.readTimeout=3000

@@ -9,6 +9,10 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.NotNull;
+
+import org.hibernate.validator.constraints.UniqueElements;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,7 +34,8 @@ public class UserEntity {
 	@Id
 	private String userId;
 	private String name;
-	private String email;
+	@Column(name = "email")
+	@Email @NotNull @UniqueElements  private String email;
 	private String about;
 	@Column(name="created_at",nullable = false)
 	private LocalDateTime createdAt;

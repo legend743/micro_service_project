@@ -19,7 +19,7 @@ public class Rating {
 	
 	
 	private String userId;
-	private String hotelId;
+	private int hotelId;
 	private Long ratingId;
 	private int rating;
 	private  String feedback;

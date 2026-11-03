@@ -11,7 +11,7 @@ import com.microservices.userservice.userentity.UserEntity;
 
 public interface UserService {
  UserResponseDto createuser(UserRequestDto user);
- List<UserEntity> getAllUsers();
+ List<UserResponseDto> getAllUsers();
  UserEntity getUser(String Userid);
  ResponseEntity<UserProfileResponseDto> getProfile(String Id);
  
