@@ -25,6 +25,7 @@ import com.microservices.userservice.dto.UserProfileResponseDto;
 import com.microservices.userservice.dto.UserRatingDto;
 import com.microservices.userservice.dto.UserRequestDto;
 import com.microservices.userservice.dto.UserResponseDto;
+import com.microservices.userservice.exception.InvalidRequesPassParameter;
 import com.microservices.userservice.exception.ResourceNotFoundException;
 import com.microservices.userservice.repository.UserRepository;
 import com.microservices.userservice.service.UserService;
@@ -40,11 +41,11 @@ public class ServiceImpl implements UserService {
 
 	UserRepository userrepo;
 	//
-	@Autowired
-	private RestTemplate resttemplate;
+	// @Autowired
+	// private RestTemplate resttemplate;
 	@Autowired
 	private RatingClientInterface ratingClientInterface;
-	@Autowired 
+	@Autowired
 	private HotelClientInterface hotelClientInterface;
 
 	private final Logger logger = LoggerFactory.getLogger(ServiceImpl.class);
@@ -61,6 +62,15 @@ public class ServiceImpl implements UserService {
 		u.setCreatedAt(LocalDateTime.now());
 		UserEntity saved = userrepo.save(u);
 		return toResponse(saved);
+	}
+
+	@Override
+	public boolean isUserExists(String userId) {
+		if (userId.isEmpty()) {
+			throw new InvalidRequesPassParameter();
+		}
+		return userrepo.existsById(userId);
+
 	}
 
 	@Override
@@ -93,34 +103,33 @@ public class ServiceImpl implements UserService {
 		// Connect to rating service
 		// String url = "http://localhost:8082/hotelrating/getbyusers/" + userId;
 
-
 		try {
 			// Logging the URL
 			logger.info("Making REST call to: {}");
 
 			// // Fetch list of ratings from the rating service
 			// ResponseEntity<List<Rating>> responseEntity = resttemplate.exchange(
-			// 		url,
-			// 		HttpMethod.GET,
-			// 		null,
-			// 		new ParameterizedTypeReference<List<Rating>>() {
-			// 		});
-List<Rating> responseEntity =ratingClientInterface.getRatingByUserId(userId);
-			
+			// url,
+			// HttpMethod.GET,
+			// null,
+			// new ParameterizedTypeReference<List<Rating>>() {
+			// });
+			List<Rating> responseEntity = ratingClientInterface.getRatingByUserId(userId);
 
 			List<Rating> ratingList = responseEntity;
 
 			// For each rating, fetch corresponding hotel details and set it to the rating
 			List<Rating> updatedRatingList = ratingList.stream().map(rating -> {
-				// String hotelUrl = "http://localhost:8081/hoteldetails/gethotels/" + rating.getHotelId();
-				Optional<Hotel> hotel=hotelClientInterface.getHotels(rating.getHotelId());
+				// String hotelUrl = "http://localhost:8081/hoteldetails/gethotels/" +
+				// rating.getHotelId();
+				Optional<Hotel> hotel = hotelClientInterface.getHotels(rating.getHotelId());
 				// API call to hotel service
 				// ResponseEntity<Hotel> hotelResponseEntity = resttemplate.exchange(
-				// 		hotelUrl,
-				// 		HttpMethod.GET,
-				// 		null,
-				// 		new ParameterizedTypeReference<Hotel>() {
-				// 		} // Corrected type reference
+				// hotelUrl,
+				// HttpMethod.GET,
+				// null,
+				// new ParameterizedTypeReference<Hotel>() {
+				// } // Corrected type reference
 				// );
 
 				// Hotel hotel = hotelResponseEntity.getBody();

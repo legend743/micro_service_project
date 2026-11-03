@@ -14,5 +14,6 @@ public interface UserService {
  List<UserResponseDto> getAllUsers();
  UserEntity getUser(String Userid);
  ResponseEntity<UserProfileResponseDto> getProfile(String Id);
+ boolean isUserExists(String userId);
  
 }

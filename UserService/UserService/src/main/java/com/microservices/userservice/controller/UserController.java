@@ -43,4 +43,9 @@ public class UserController {
 		return ResponseEntity.ok(allUserdetails);
 	}
 
+	@GetMapping("/isUserExists/{userId")
+	public boolean isUserExists(@PathVariable String id) {
+		
+		return  userservice.isUserExists(id);
+	}
 }

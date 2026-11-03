@@ -3,26 +3,24 @@ package com.microservices.hotelrating.service;
 import java.util.List;
 import java.util.Optional;
 
-import com.microservices.hotelrating.Utility.RatingUtility;
+import org.springframework.http.ResponseEntity;
 
+import com.microservices.hotelrating.Utility.RatingUtility;
+import com.microservices.hotelrating.dto.RatingRequest;
+import com.microservices.hotelrating.dto.RatingResponseDto;
 
 public interface RatingService {
-	//create 
-	RatingUtility created(RatingUtility rating);
-	
-	//getall ratings
-	List<RatingUtility> getAllRating();
+	// create
+	ResponseEntity<String> created(RatingRequest rating);
 
-//	Object getRatingByUserId(Long userId);
-//	List<RatingUtility> getRatingByUserId(Long ratingId);
+	// getall ratings
+	List<RatingResponseDto> getAllRating();
+
+	// Object getRatingByUserId(Long userId);
+	// List<RatingUtility> getRatingByUserId(Long ratingId);
 
 	Optional<RatingUtility> getRatingByRatingId(Long ratingId);
 
 	List<RatingUtility> getRatingByUserId(String userId);
-	
-		
-	
-	
-	
 
 }

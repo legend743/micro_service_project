@@ -26,6 +26,12 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.CONFLICT, ex.getMessage(), req);
     }
 
+    @ExceptionHandler(InvalidRequesPassParameter.class)
+    public ResponseEntity<Map<String, Object>> noParameterPassed(InvalidRequesPassParameter ex,
+            HttpServletRequest req) {
+        return build(HttpStatus.BAD_REQUEST, "please pass userId", req);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> invalid(MethodArgumentNotValidException ex, HttpServletRequest req) {
         String msg = ex.getBindingResult().getFieldErrors().stream()
