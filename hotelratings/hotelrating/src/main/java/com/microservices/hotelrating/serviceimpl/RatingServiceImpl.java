@@ -1,19 +1,13 @@
 package com.microservices.hotelrating.serviceimpl;
 
+import java.lang.Thread.State;
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Example;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.repository.query.FluentQuery.FetchableFluentQuery;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +16,7 @@ import com.microservices.hotelrating.client.UserClientInterface;
 import com.microservices.hotelrating.dto.RatingRequest;
 import com.microservices.hotelrating.dto.RatingResponseDto;
 import com.microservices.hotelrating.exception.ResourceNotFoundException;
+import com.microservices.hotelrating.exception.BadRequestException;
 import com.microservices.hotelrating.repository.RatingRepository;
 import com.microservices.hotelrating.service.RatingService;
 
@@ -66,14 +61,26 @@ public class RatingServiceImpl implements RatingService {
 	}
 
 	@Override
-	public Optional<RatingUtility> getRatingByRatingId(Long ratingId) {
-		return ratingrepo.findById(ratingId);
+	public RatingResponseDto getRatingByRatingId(Long ratingId) {
+		if (ratingId == null)
+			throw new BadRequestException();
+		RatingUtility rating = ratingrepo.findById(ratingId)
+				.orElseThrow(() -> new ResourceNotFoundException("rating with given id is not found"));
+
+		return (toMapDto(rating));
 	}
 
 	@Override
-	public List<RatingUtility> getRatingByUserId(String userId) {
+	public List<RatingResponseDto> getRatingByUserId(String userId) {
 
-		return ratingrepo.findUserByUserId(userId);
+		List<RatingUtility> allRating = ratingrepo.findAllRatingUtilityByUserId(userId);
+		if (allRating.isEmpty()) {
+			throw new ResourceNotFoundException("Rating now found with this userId:" + userId);
+
+		}
+		List<RatingResponseDto> allRatingResponseList = allRating.stream().map(this::toMapDto)
+				.collect(Collectors.toList());
+		return allRatingResponseList;
 	}
 
 	private RatingUtility mapToRatingUtility(RatingRequest req) {

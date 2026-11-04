@@ -13,4 +13,7 @@ import com.microservices.hotelrating.Utility.RatingUtility;
 public interface RatingRepository extends JpaRepository<RatingUtility,Long> {
 	
 	List<RatingUtility>findUserByUserId(String userId);
+
+	List<RatingUtility>findAllRatingUtilityByUserId(String userId);
+
 }

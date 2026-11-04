@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.example.microservices.hotel_microservices.Entity.HotelEntity;
 import com.example.microservices.hotel_microservices.service.MicroService;
+import com.example.microservices.hotel_microservices.dto.*;
 
 @RestController
 @RequestMapping("/hoteldetails")
@@ -20,7 +21,7 @@ public class HotelController {
     private MicroService microserve;
 
     @PostMapping("/addhotel")
-    public ResponseEntity<HotelEntity> addHotels(@RequestBody HotelEntity hotelEntity){
+    public ResponseEntity<HotelEntity> addHotels(@RequestBody HotelRequestDto hotelEntity){
         return ResponseEntity.status(HttpStatus.CREATED).body(microserve.Create(hotelEntity));
     }
     @GetMapping("/getallhotels")

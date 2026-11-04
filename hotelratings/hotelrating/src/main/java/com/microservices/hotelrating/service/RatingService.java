@@ -19,8 +19,9 @@ public interface RatingService {
 	// Object getRatingByUserId(Long userId);
 	// List<RatingUtility> getRatingByUserId(Long ratingId);
 
-	Optional<RatingUtility> getRatingByRatingId(Long ratingId);
+	// Optional<RatingUtility> getRatingByRatingId(Long ratingId);
+	 RatingResponseDto getRatingByRatingId(Long ratingId);
 
-	List<RatingUtility> getRatingByUserId(String userId);
+	List<RatingResponseDto> getRatingByUserId(String userId);
 
 }

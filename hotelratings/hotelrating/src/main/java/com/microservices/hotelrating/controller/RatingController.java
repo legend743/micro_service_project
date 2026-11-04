@@ -5,7 +5,6 @@ import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -13,8 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.microservices.hotelrating.Utility.RatingUtility;
+import  com.microservices.hotelrating.exception.*;
 import com.microservices.hotelrating.dto.RatingRequest;
 import com.microservices.hotelrating.dto.RatingResponseDto;
 import com.microservices.hotelrating.service.RatingService;
@@ -41,13 +39,18 @@ public class RatingController {
 	}
 
 	@GetMapping("/getbyusers/{userId}")
-	public ResponseEntity<List<RatingUtility>> getRatingByUserid(@PathVariable String userId) {
+	public ResponseEntity<List<RatingResponseDto>> getRatingByUserid(@PathVariable String userId) {
 		logger.info("user detais userId:{}" + userId);
+		if (userId.isEmpty()) {
+			throw new BadRequestException("Please provide userId");
+
+		}
 		return ResponseEntity.ok(ratingservice.getRatingByUserId(userId));
 	}
 
 	@GetMapping("/getByRatingId/{ratingId}")
-	public ResponseEntity<Optional<RatingUtility>> getRatingByHotelId(@PathVariable Long ratingId) {
+	public ResponseEntity<RatingResponseDto> getRatingByHotelId(@PathVariable Long ratingId) {
+
 		return ResponseEntity.ok(ratingservice.getRatingByRatingId(ratingId));
 	}
 }

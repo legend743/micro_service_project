@@ -32,6 +32,11 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.CONFLICT, ex.getMessage(), req);
 
     }
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<Map<String,Object>>requiredParamNotPassed(BadRequestException b,HttpServletRequest req){
+        return build(HttpStatus.BAD_REQUEST,b.getMessage(),req);
+
+    }
 
     private ResponseEntity<Map<String, Object>> build(HttpStatus status, String message, HttpServletRequest req) {
         Map<String, Object> body = new LinkedHashMap<>();

@@ -5,7 +5,18 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Table;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 @Entity
+@Getter 
+@Setter 
+@NoArgsConstructor 
+@AllArgsConstructor 
+@Builder 
 @Table(name = "hoteldetails")
 public class HotelEntity {
 	@javax.persistence.Id
@@ -15,45 +26,5 @@ public class HotelEntity {
 	private String hotelName;
 	private String location;
 
-	public int getId() {
-		return Id;
-	}
-
-	public void setId(int id) {
-		Id = id;
-	}
-
-	public String getHotelName() {
-		return hotelName;
-	}
-
-	public void setHotelName(String hotelName) {
-		this.hotelName = hotelName;
-	}
-
-	public String getLocation() {
-		return location;
-	}
-
-	public void setLocation(String location) {
-		this.location = location;
-	}
-
-	public HotelEntity(int id, String hotelName, String location) {
-		super();
-		Id = id;
-		this.hotelName = hotelName;
-		this.location = location;
-	}
-
-	@Override
-	public String toString() {
-		return "HotelEntity [Id=" + Id + ", hotelName=" + hotelName + ", location=" + location + "]";
-	}
-
-	public HotelEntity() {
-		super();
-		// TODO Auto-generated constructor stub
-	}
-
+	
 }
