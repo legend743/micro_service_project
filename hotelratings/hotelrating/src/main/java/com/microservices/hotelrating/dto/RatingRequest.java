@@ -12,11 +12,11 @@ import lombok.Setter;
 @Setter
 public class RatingRequest {
 
-    @NotBlank
-    public Long ratingId;
+    // @NotBlank
+    // public Long ratingId;
     @NotBlank
     public String userId;
-    @NotBlank
+    @Min(1)
     public int hotelId;
     @Min(1)
     @Max(5)

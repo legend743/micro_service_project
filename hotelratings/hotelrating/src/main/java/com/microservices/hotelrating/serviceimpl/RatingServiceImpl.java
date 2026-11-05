@@ -1,13 +1,13 @@
 package com.microservices.hotelrating.serviceimpl;
 
-import java.lang.Thread.State;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
+// import org.springframework.kafka.core.KafKaTemplate;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -15,10 +15,12 @@ import com.microservices.hotelrating.Utility.RatingUtility;
 import com.microservices.hotelrating.client.UserClientInterface;
 import com.microservices.hotelrating.dto.RatingRequest;
 import com.microservices.hotelrating.dto.RatingResponseDto;
+import com.microservices.hotelrating.event.RatingEventPayload;
 import com.microservices.hotelrating.exception.ResourceNotFoundException;
 import com.microservices.hotelrating.exception.BadRequestException;
 import com.microservices.hotelrating.repository.RatingRepository;
 import com.microservices.hotelrating.service.RatingService;
+import com.microservices.hotelrating.event.RatingSubmittedEvent;
 
 @Service
 public class RatingServiceImpl implements RatingService {
@@ -27,6 +29,8 @@ public class RatingServiceImpl implements RatingService {
 	RatingRepository ratingrepo;
 	@Autowired
 	UserClientInterface userClientInterface;
+	@Autowired
+	private KafkaTemplate<String, RatingSubmittedEvent> kafKaTemplate;
 
 	@Override
 	public ResponseEntity<String> created(RatingRequest rating) {
@@ -34,12 +38,35 @@ public class RatingServiceImpl implements RatingService {
 			throw new ResourceNotFoundException("user with user id not found/User Service Down");
 		}
 		// TODO add check for hotel
+
+		RatingUtility r = mapToRatingUtility(rating);
+
+		RatingUtility ratingUtility = ratingrepo.save(r);
+		// create event payload here
+		RatingEventPayload eventPayload = new RatingEventPayload();
+		eventPayload.setHotelId(0);
+		eventPayload.setRatingId(ratingUtility.getRatingId());
+		eventPayload.setUserId(rating.userId);
+		eventPayload.setScore(rating.rating);
+
+		RatingSubmittedEvent ratingSubmission = new RatingSubmittedEvent(
+				UUID.randomUUID().toString(),
+				"RATING_SUBMITTED",
+				java.time.Instant.now(),
+				UUID.randomUUID().toString(),
+				eventPayload
+
+		);
+
 		try {
-			RatingUtility r = mapToRatingUtility(rating);
-			if (r != null)
-				ratingrepo.save(r);
+			kafKaTemplate.send(
+					"rating.submitted",
+					String.valueOf(ratingUtility.getRatingId()),
+					ratingSubmission).get(10, TimeUnit.SECONDS);
 			return ResponseEntity.ok("Saved successfully");
-		} catch (Exception e) {
+		}
+
+		catch (Exception e) {
 			throw new InternalError("Internal Server Error!");
 		}
 

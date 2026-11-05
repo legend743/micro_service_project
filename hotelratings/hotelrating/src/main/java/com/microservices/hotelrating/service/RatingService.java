@@ -1,11 +1,7 @@
 package com.microservices.hotelrating.service;
 
 import java.util.List;
-import java.util.Optional;
-
 import org.springframework.http.ResponseEntity;
-
-import com.microservices.hotelrating.Utility.RatingUtility;
 import com.microservices.hotelrating.dto.RatingRequest;
 import com.microservices.hotelrating.dto.RatingResponseDto;
 
