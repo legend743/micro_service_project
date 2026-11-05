@@ -34,9 +34,9 @@ public class RatingServiceImpl implements RatingService {
 
 	@Override
 	public ResponseEntity<String> created(RatingRequest rating) {
-		if (!userClientInterface.isUserExists(rating.userId)) {
-			throw new ResourceNotFoundException("user with user id not found/User Service Down");
-		}
+		// if (!userClientInterface.isUserExists(rating.userId)) {
+		// 	throw new ResourceNotFoundException("user with user id not found/User Service Down");
+		// }
 		// TODO add check for hotel
 
 		RatingUtility r = mapToRatingUtility(rating);

@@ -1,10 +1,13 @@
 package com.microservices.userservice.serviceimpl;
 
+import java.sql.Time;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -18,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.kafKaTemplate.core.KafkaTemplate;
 
 import com.microservices.userservice.client.HotelClientInterface;
 import com.microservices.userservice.client.RatingClientInterface;
@@ -25,6 +29,8 @@ import com.microservices.userservice.dto.UserProfileResponseDto;
 import com.microservices.userservice.dto.UserRatingDto;
 import com.microservices.userservice.dto.UserRequestDto;
 import com.microservices.userservice.dto.UserResponseDto;
+import com.microservices.userservice.event.UserServicePayload;
+import com.microservices.userservice.event.UserSubmissionEvent;
 import com.microservices.userservice.exception.InvalidRequesPassParameter;
 import com.microservices.userservice.exception.ResourceNotFoundException;
 import com.microservices.userservice.repository.UserRepository;
@@ -47,6 +53,8 @@ public class ServiceImpl implements UserService {
 	private RatingClientInterface ratingClientInterface;
 	@Autowired
 	private HotelClientInterface hotelClientInterface;
+	@Autowired 
+	private KafkaTemplate<String,UserSubmissionEvent> kaftemplate;
 
 	private final Logger logger = LoggerFactory.getLogger(ServiceImpl.class);
 
@@ -61,6 +69,20 @@ public class ServiceImpl implements UserService {
 		u.setEmail(user.getEmail());
 		u.setCreatedAt(LocalDateTime.now());
 		UserEntity saved = userrepo.save(u);
+
+		UserSubmissionEvent use = new UserSubmissionEvent();
+		use.setEventId(UUID.randomUUID().toString());
+		use.setCorealtionId(UUID.randomUUID().toString());
+		use.setEventType("User-registed");
+		use.setTimestamp(Instant.now());
+		use.setUserServicePayload(setPayload(saved));
+
+		kaftemplate.send(
+			"user-registered",
+			saved.getUserId(),
+			use
+		).get(10,TimeUnit.SECONDS);
+
 		return toResponse(saved);
 	}
 
@@ -186,5 +208,11 @@ public class ServiceImpl implements UserService {
 		dto.setHotel(rating.getHotel());
 		return dto;
 
+	}
+
+	private UserServicePayload setPayload(UserEntity userEntity) {
+		UserServicePayload up = new UserServicePayload();
+		up.setUserId(userEntity.getUserId());
+		return up;
 	}
 }
